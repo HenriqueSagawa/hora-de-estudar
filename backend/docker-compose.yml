@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: hora-de-estudar-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hora_de_estudar
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hora-de-estudar-api
+    restart: unless-stopped
+    ports:
+      - "3333:3333"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/hora_de_estudar?schema=public"
+      JWT_SECRET: "change-this-in-production"
+      JWT_EXPIRES_IN: "7d"
+      PORT: "3333"
+      NODE_ENV: "production"
+      CORS_ORIGIN: "http://localhost:3000"
+    command: >
+      sh -c "npx prisma migrate deploy && node dist/server.js"
+
+volumes:
+  pgdata:

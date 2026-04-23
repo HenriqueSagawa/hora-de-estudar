@@ -1,0 +1,185 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum StudySessionSource {
+  MANUAL
+  TIMER
+}
+
+enum TimerStatus {
+  RUNNING
+  PAUSED
+}
+
+enum RoomVisibility {
+  PUBLIC
+  PRIVATE
+  INVITE_ONLY
+}
+
+enum RoomMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum RoomActivityType {
+  MEMBER_JOINED
+  MEMBER_LEFT
+  SESSION_LOGGED
+  MEMBER_PROMOTED
+  MEMBER_DEMOTED
+  MEMBER_REMOVED
+  ROOM_UPDATED
+  MILESTONE_REACHED
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  avatarUrl    String?  @map("avatar_url")
+  bio          String?
+  institution  String?
+  course       String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  studySessions  StudySession[]
+  activeTimer    ActiveTimer?
+  roomMembers    RoomMember[]
+  ownedRooms     Room[]           @relation("RoomOwner")
+  roomActivities RoomActivity[]
+
+  @@map("users")
+}
+
+model StudySession {
+  id              String             @id @default(cuid())
+  userId          String             @map("user_id")
+  title           String
+  description     String?
+  subject         String?
+  studyType       String?            @map("study_type")
+  source          StudySessionSource
+  durationSeconds Int                @map("duration_seconds")
+  startedAt       DateTime?          @map("started_at")
+  endedAt         DateTime?          @map("ended_at")
+  studyDate       DateTime           @map("study_date") @db.Date
+  focusLevel      Int?               @map("focus_level")
+  roomId          String?            @map("room_id")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([roomId])
+  @@index([studyDate])
+  @@index([source])
+  @@index([userId, studyDate])
+  @@index([roomId, studyDate])
+  @@map("study_sessions")
+}
+
+model ActiveTimer {
+  id                 String      @id @default(cuid())
+  userId             String      @unique @map("user_id")
+  title              String
+  description        String?
+  subject            String?
+  studyType          String?     @map("study_type")
+  roomId             String?     @map("room_id")
+  status             TimerStatus @default(RUNNING)
+  startedAt          DateTime    @default(now()) @map("started_at")
+  totalPausedSeconds Int         @default(0) @map("total_paused_seconds")
+  lastPausedAt       DateTime?   @map("last_paused_at")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+  @@map("active_timers")
+}
+
+model Room {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  coverImageUrl String?        @map("cover_image_url")
+  inviteCode    String         @unique @map("invite_code")
+  visibility    RoomVisibility @default(PRIVATE)
+  ownerId       String         @map("owner_id")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  owner         User           @relation("RoomOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members       RoomMember[]
+  studySessions StudySession[]
+  activities    RoomActivity[]
+  activeTimers  ActiveTimer[]
+
+  @@index([ownerId])
+  @@index([inviteCode])
+  @@map("rooms")
+}
+
+model RoomMember {
+  id       String         @id @default(cuid())
+  roomId   String         @map("room_id")
+  userId   String         @map("user_id")
+  role     RoomMemberRole @default(MEMBER)
+  joinedAt DateTime       @default(now()) @map("joined_at")
+
+  // Relations
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@index([roomId])
+  @@index([userId])
+  @@map("room_members")
+}
+
+model RoomActivity {
+  id        String           @id @default(cuid())
+  roomId    String           @map("room_id")
+  userId    String           @map("user_id")
+  type      RoomActivityType
+  message   String
+  metadata  Json?
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([roomId, createdAt])
+  @@map("room_activities")
+}
