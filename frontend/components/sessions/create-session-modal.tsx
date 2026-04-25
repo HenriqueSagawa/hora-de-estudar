@@ -27,7 +27,8 @@ import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
 import { useCreateManualSession, useUpdateSession } from '@/hooks/queries/use-study-sessions'
 import { useRooms } from '@/hooks/queries/use-rooms'
-import { STUDY_TYPE_LABELS, FOCUS_LEVEL_LABELS } from '@/lib/format'
+import { mapFocusLevelOptionToValue, mapFocusLevelValueToOption } from '@/lib/focus-level'
+import { STUDY_TYPE_LABELS, FOCUS_LEVEL_LABELS, FOCUS_LEVEL_OPTIONS } from '@/lib/format'
 import type { StudySession } from '@/types/api'
 
 const NO_ROOM_VALUE = '__no_room__'
@@ -40,7 +41,7 @@ const sessionSchema = z.object({
   hours: z.coerce.number().min(0).max(23),
   minutes: z.coerce.number().min(0).max(59),
   studyDate: z.string().min(1, 'Data é obrigatória'),
-  focusLevel: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
+  focusLevel: z.enum(FOCUS_LEVEL_OPTIONS).optional(),
   roomId: z.string().optional(),
 })
 
@@ -86,7 +87,7 @@ export function CreateSessionModal({ open, onOpenChange, editSession }: CreateSe
         hours,
         minutes,
         studyDate: editSession.studyDate.split('T')[0],
-        focusLevel: editSession.focusLevel,
+        focusLevel: mapFocusLevelValueToOption(editSession.focusLevel),
         roomId: editSession.roomId || undefined,
       })
     } else {
@@ -123,7 +124,7 @@ export function CreateSessionModal({ open, onOpenChange, editSession }: CreateSe
             studyType: data.studyType,
             durationSeconds,
             studyDate: data.studyDate,
-            focusLevel: data.focusLevel,
+            focusLevel: mapFocusLevelOptionToValue(data.focusLevel),
           },
         })
         toast.success('Sessão atualizada com sucesso!')
@@ -135,7 +136,7 @@ export function CreateSessionModal({ open, onOpenChange, editSession }: CreateSe
           studyType: data.studyType,
           durationSeconds,
           studyDate: data.studyDate,
-          focusLevel: data.focusLevel,
+          focusLevel: mapFocusLevelOptionToValue(data.focusLevel),
           roomId: data.roomId,
         })
         toast.success('Sessão criada com sucesso!')
@@ -226,9 +227,9 @@ export function CreateSessionModal({ open, onOpenChange, editSession }: CreateSe
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(FOCUS_LEVEL_LABELS).map(([value, label]) => (
+                    {FOCUS_LEVEL_OPTIONS.map((value) => (
                       <SelectItem key={value} value={value}>
-                        {label}
+                        {FOCUS_LEVEL_LABELS[value]}
                       </SelectItem>
                     ))}
                   </SelectContent>

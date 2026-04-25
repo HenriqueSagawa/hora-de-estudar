@@ -79,10 +79,17 @@ export const STUDY_TYPE_LABELS: Record<string, string> = {
   OTHER: 'Outro',
 }
 
+export const FOCUS_LEVEL_OPTIONS = ['LOW', 'MEDIUM', 'HIGH'] as const
+
 export const FOCUS_LEVEL_LABELS: Record<string, string> = {
   LOW: 'Baixo',
   MEDIUM: 'Médio',
   HIGH: 'Alto',
+  1: 'Baixo',
+  2: 'Baixo',
+  3: 'Médio',
+  4: 'Alto',
+  5: 'Alto',
 }
 
 export const ROOM_VISIBILITY_LABELS: Record<string, string> = {

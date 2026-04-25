@@ -61,7 +61,8 @@ export interface ChangePasswordPayload {
 // Study Session types
 export type StudySessionSource = 'MANUAL' | 'TIMER'
 export type StudyType = 'READING' | 'EXERCISES' | 'VIDEO' | 'REVIEW' | 'PROJECT' | 'OTHER'
-export type FocusLevel = 'LOW' | 'MEDIUM' | 'HIGH'
+export type FocusLevelOption = 'LOW' | 'MEDIUM' | 'HIGH'
+export type FocusLevelValue = 1 | 2 | 3 | 4 | 5
 export type TimerStatus = 'RUNNING' | 'PAUSED' | 'FINISHED' | 'CANCELLED'
 
 export interface StudySession {
@@ -74,7 +75,7 @@ export interface StudySession {
   source: StudySessionSource
   durationSeconds: number
   studyDate: string
-  focusLevel?: FocusLevel
+  focusLevel?: FocusLevelValue | null
   roomId?: string
   room?: Room
   timerStatus?: TimerStatus
@@ -92,7 +93,7 @@ export interface CreateManualSessionPayload {
   studyType: StudyType
   durationSeconds: number
   studyDate: string
-  focusLevel?: FocusLevel
+  focusLevel?: FocusLevelValue | null
   roomId?: string
 }
 
@@ -103,7 +104,7 @@ export interface UpdateSessionPayload {
   studyType?: StudyType
   durationSeconds?: number
   studyDate?: string
-  focusLevel?: FocusLevel
+  focusLevel?: FocusLevelValue | null
 }
 
 export interface StartTimerPayload {
